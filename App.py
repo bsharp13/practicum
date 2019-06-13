@@ -7,44 +7,74 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 import datetime
+import pickle
 
 from dash.dependencies import Input, Output
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.externals import joblib
 
 # Read in date data
 dates = pd.read_csv('Dates.csv')
 dates['Prob'] = np.random.uniform(0, 1, len(dates.index)) # pseudo model pred
 day_array = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
+# Input option lists
+months = dates['MonthName'].unique()
+patients = ['New Patient', 'Returning Patient']
+genders = ['M', 'F']
+
 display = dates[dates['Month'] == datetime.datetime.today().month]
 display_label = datetime.datetime.today().strftime('%B')
 
+# Define styles
+dropdown_style = {'width': '25%', 'display': 'inline-block', 'padding': 10}
+
 # Read in model object
+model = pickle.load(open(gb00.sav))
 
 app = dash.Dash()
 
 app.layout = html.Div(
-	children = [
+	html.Div([
 		html.H1('Appointment Scheduler'),
-		dcc.Input(
-			id = 'month',
-			value = display_label,
-			type = 'text'
-		),
-		dcc.Input(
-			id = 'patient',
-			value = 'New Patient',
-			type = 'text'
-		),
-		dcc.Input(
-			id = 'gender',
-			value = 'M',
-			type = 'text'
-		),
+		html.H2('General Information'),
+
+		html.Div([
+			dcc.Dropdown(
+				id = 'month',
+				value = display_label,
+				options = [{'label': i, 'value': i} for i in months]
+			),
+		],
+		style = dropdown_style),
+		
+		html.Div([
+			dcc.Dropdown(
+				id = 'patient',
+				value = 'New Patient',
+				options = [{'label': i, 'value': i} for i in patients]
+			),		
+		],
+		style = dropdown_style),
+
+		html.Div([
+			dcc.Dropdown(
+				id = 'gender',
+				value = 'M',
+				options = [{'label': i, 'value': i} for i in genders]
+			),
+		],
+		style = dropdown_style),
+
+
 		dcc.Input(
 			id = 'age',
 			value = 25,
 			type = 'number'
 		),
+
+		html.H2('Medical History'),
 		dcc.Input(
 			id = 'hipertension',
 			value = 0,
@@ -68,8 +98,7 @@ app.layout = html.Div(
 		html.Div(
 			id = 'output-month'
 		),
-
-	]
+	])
 )
 
 @app.callback(
@@ -80,6 +109,9 @@ def update_cal(input_month):
 
 	# Filter dates data to show selected month
 	display = dates[dates['MonthName'] == input_month]
+
+	# FIXME:: Run predictions on display data
+	
 
 	# FIXME:: Dynamic ratio for graph based on number of weeks in month
 	# Define calendar ratio
