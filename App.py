@@ -16,7 +16,8 @@ from sklearn.externals import joblib
 
 # Read in date data
 dates = pd.read_csv('Dates.csv')
-dates['Prob'] = np.random.uniform(0, 1, len(dates.index)) # pseudo model pred
+dates.loc[:, 'Date'] = pd.to_datetime(dates.loc[:, 'Date']).dt.date
+#dates['Prob'] = np.random.uniform(0, 1, len(dates.index)) # pseudo model pred
 day_array = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
 # Input option lists
@@ -31,7 +32,8 @@ display_label = datetime.datetime.today().strftime('%B')
 dropdown_style = {'width': '25%', 'display': 'inline-block', 'padding': 10}
 
 # Read in model object
-model = pickle.load(open(gb00.sav))
+with open('gb00.pkl', 'rb') as file:  
+    model = pickle.load(file)
 
 app = dash.Dash()
 
@@ -43,7 +45,7 @@ app.layout = html.Div(
 		html.Div([
 			dcc.Dropdown(
 				id = 'month',
-				value = display_label,
+				value = 'June',
 				options = [{'label': i, 'value': i} for i in months]
 			),
 		],
@@ -109,9 +111,36 @@ def update_cal(input_month):
 
 	# Filter dates data to show selected month
 	display = dates[dates['MonthName'] == input_month]
+	display = display.reset_index()
+	display = display.drop('index', axis = 1)
 
 	# FIXME:: Run predictions on display data
-	
+	display.loc[:,'DaysBetween'] = display['Date'] - datetime.date.today()
+	display.loc[:,'DaysBetween'] = display['DaysBetween'].dt.days
+
+	display.loc[:, 'Gender'] = 1
+	display.loc[:, 'Age'] = 24
+	display.loc[:, 'Scholarship'] = 0
+	display.loc[:, 'Hipertension'] = 0
+	display.loc[:, 'Diabetes'] = 0
+	display.loc[:, 'PreviousMiss'] = 0
+	display.loc[:, 'Alcoholism'] = 0
+	display.loc[:, 'Handcap'] = 0
+	display.loc[:, 'SMS_received'] = 0
+
+	pred_data = display.drop(
+		[
+	    	'MonthName', 'Month', 'Year', 'Day', 'Date', 'Weekday', 'DayOfWeek', 
+	    	'DayLabel', 'WeekOfMonth',
+		],
+		axis = 1
+	)
+
+
+	probs = model.predict_proba(pred_data)
+	probs = pd.Series([i[1] for i in probs])
+
+	display['Prob'] = probs + np.random.uniform(-0.0001, 0.0001, len(display.index))
 
 	# FIXME:: Dynamic ratio for graph based on number of weeks in month
 	# Define calendar ratio
@@ -133,13 +162,16 @@ def update_cal(input_month):
 						'size': 114,
 						'color': display['Prob'],
 						'colorscale': 'YlGnBu',
+						'cauto': False,
+						'cmin': 0,
+						'cmax': 1,
 						'colorbar': {
 							'title': 'Probability of No Show',
 							'len': 0.8,
 							'tickformat': ".0%"
 						}
 					},
-					text = display['Day'],
+					text = display['Prob'].round(5),
 					textposition = 'middle center'
 				)
 			],
