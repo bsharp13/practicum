@@ -105,9 +105,20 @@ app.layout = html.Div(
 
 @app.callback(
 	Output(component_id = 'output-month', component_property = 'children'),
-	[Input(component_id = 'month', component_property = 'value')]
+	[
+		Input(component_id = 'month', component_property = 'value'),
+		Input(component_id = 'gender', component_property = 'value'),
+		Input(component_id = 'age', component_property = 'value'),
+		Input(component_id = 'hipertension', component_property = 'value'),
+		Input(component_id = 'diabetes', component_property = 'value'),
+		Input(component_id = 'handcap', component_property = 'value'),
+		Input(component_id = 'sms', component_property = 'value')
+
+	]
 )
-def update_cal(input_month):
+def update_cal(input_month, input_gender, input_age, input_hipertension,
+				input_diabetes, input_handcap, input_sms
+	):
 
 	# Filter dates data to show selected month
 	display = dates[dates['MonthName'] == input_month]
@@ -118,15 +129,20 @@ def update_cal(input_month):
 	display.loc[:,'DaysBetween'] = display['Date'] - datetime.date.today()
 	display.loc[:,'DaysBetween'] = display['DaysBetween'].dt.days
 
-	display.loc[:, 'Gender'] = 1
-	display.loc[:, 'Age'] = 24
+	if input_gender == 'M':
+		display.loc[:, 'Gender'] = 1
+	else:
+		display.loc[:, 'Gender'] = 0
+
+	display.loc[:, 'Gender'] = 0
+	display.loc[:, 'Age'] = input_age
 	display.loc[:, 'Scholarship'] = 0
-	display.loc[:, 'Hipertension'] = 0
-	display.loc[:, 'Diabetes'] = 0
+	display.loc[:, 'Hipertension'] = input_hipertension
+	display.loc[:, 'Diabetes'] = input_diabetes
 	display.loc[:, 'PreviousMiss'] = 0
 	display.loc[:, 'Alcoholism'] = 0
-	display.loc[:, 'Handcap'] = 0
-	display.loc[:, 'SMS_received'] = 0
+	display.loc[:, 'Handcap'] = input_handcap
+	display.loc[:, 'SMS_received'] = input_sms
 
 	pred_data = display.drop(
 		[
@@ -140,7 +156,7 @@ def update_cal(input_month):
 	probs = model.predict_proba(pred_data)
 	probs = pd.Series([i[1] for i in probs])
 
-	display['Prob'] = probs + np.random.uniform(-0.0001, 0.0001, len(display.index))
+	display['Prob'] = probs
 
 	# FIXME:: Dynamic ratio for graph based on number of weeks in month
 	# Define calendar ratio
@@ -171,7 +187,7 @@ def update_cal(input_month):
 							'tickformat': ".0%"
 						}
 					},
-					text = display['Prob'].round(5),
+					#text = display['Day'],
 					textposition = 'middle center'
 				)
 			],
