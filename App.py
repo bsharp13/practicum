@@ -25,11 +25,45 @@ months = dates['MonthName'].unique()
 patients = ['New Patient', 'Returning Patient']
 genders = ['M', 'F']
 
+# Filter to current month
 display = dates[dates['Month'] == datetime.datetime.today().month]
 display_label = datetime.datetime.today().strftime('%B')
 
 # Define styles
-dropdown_style = {'width': '25%', 'display': 'inline-block', 'padding': 10}
+dash_style = {
+	'margin-left': 50,
+	'margin-top': 50
+}
+
+input_style = {
+	'width': '20%',
+	'height': '10px',
+	'display': 'table-cell',
+	'padding-left': 5,
+	'padding-right': 5,
+	'verticalAlign': 'middle',
+	'font-family': 'Helvetica',
+	'font-weight': 'lighter',
+	'font-size': '12pt'
+}
+
+h1_style = {
+	'font-family': 'Helvetica',
+	'font-weight': 'lighter',
+	'font-size': '48pt',
+}
+
+h2_style = {
+	'font-family': 'Helvetica',
+	'font-weight': 'lighter',
+	'font-size': '24pt'	
+}
+
+h3_style = {
+	'font-family': 'Helvetica',
+	'font-weight': 'lighter',
+	'font-size': '12pt'
+}
 
 # Read in model object
 with open('gb00.pkl', 'rb') as file:  
@@ -39,68 +73,104 @@ app = dash.Dash()
 
 app.layout = html.Div(
 	html.Div([
-		html.H1('Appointment Scheduler'),
-		html.H2('General Information'),
+		html.H1('Appointment Scheduler', style = h1_style),
+		html.H2('General Information', style = h2_style),
 
 		html.Div([
-			dcc.Dropdown(
-				id = 'month',
-				value = 'June',
-				options = [{'label': i, 'value': i} for i in months]
-			),
-		],
-		style = dropdown_style),
+			html.Div([
+				html.H3('Month', style =  h3_style),
+				dcc.Dropdown(
+					id = 'month',
+					value = 'June',
+					options = [{'label': i, 'value': i} for i in months]
+				),
+			],
+			style = input_style),
 		
-		html.Div([
-			dcc.Dropdown(
-				id = 'patient',
-				value = 'New Patient',
-				options = [{'label': i, 'value': i} for i in patients]
-			),		
+			html.Div([
+				html.H3('Patient Type', style = h3_style),
+				dcc.Dropdown(
+					id = 'patient',
+					value = 'New Patient',
+					options = [{'label': i, 'value': i} for i in patients]
+				),		
+			],
+			style = input_style),
+
+			html.Div([
+				html.H3('Gender', style = h3_style),
+				dcc.Dropdown(
+					id = 'gender',
+					value = 'M',
+					options = [{'label': i, 'value': i} for i in genders]
+				),
+			],
+			style = input_style),
 		],
-		style = dropdown_style),
+		style = {
+			'width': '50%',
+			'display': 'table'
+		}),
+
+		html.H2('Medical History', style = h2_style),
 
 		html.Div([
-			dcc.Dropdown(
-				id = 'gender',
-				value = 'M',
-				options = [{'label': i, 'value': i} for i in genders]
-			),
+			html.Div([
+				html.H3('Age', style = h3_style),
+				dcc.Input(
+					id = 'age',
+					value = 25,
+					type = 'number'
+				),
+			],
+			style = input_style),
+			html.Div([
+				html.H3('Hipertension', style = h3_style),
+				dcc.Input(
+					id = 'hipertension',
+					value = 0,
+					type = 'number'
+				),
+			],
+			style = input_style),
+			html.Div([
+				html.H3('Diabetic', style = h3_style),
+				dcc.Input(
+					id = 'diabetes',
+					value = 0,
+					type = 'number'
+				),
+			],
+			style = input_style),
+			html.Div([
+				html.H3('Handicap', style = h3_style),
+				dcc.Input(
+					id = 'handcap',
+					value = 0,
+					type = 'number'
+				),
+			],
+			style = input_style),
+			html.Div([
+				html.H3('Received SMS', style = h3_style),
+				dcc.Input(
+					id = 'sms',
+					value = 0,
+					type = 'number'
+				)
+			],
+			style = input_style),
 		],
-		style = dropdown_style),
+		style = {
+			'width': '50%',
+			'display': 'table'
+		}),
 
-
-		dcc.Input(
-			id = 'age',
-			value = 25,
-			type = 'number'
-		),
-
-		html.H2('Medical History'),
-		dcc.Input(
-			id = 'hipertension',
-			value = 0,
-			type = 'number'
-		),
-		dcc.Input(
-			id = 'diabetes',
-			value = 0,
-			type = 'number'
-		),
-		dcc.Input(
-			id = 'handcap',
-			value = 0,
-			type = 'number'
-		),
-		dcc.Input(
-			id = 'sms',
-			value = 0,
-			type = 'number'
-		),
 		html.Div(
 			id = 'output-month'
 		),
-	])
+	]),
+	style = dash_style
 )
 
 @app.callback(
@@ -158,12 +228,9 @@ def update_cal(input_month, input_gender, input_age, input_hipertension,
 
 	display['Prob'] = probs
 
-	# FIXME:: Dynamic ratio for graph based on number of weeks in month
 	# Define calendar ratio
-	cal_height = 1000
-
-
-	cal_ratio = ((7 + 0.3) / 6)
+	cal_width = 1200
+	weeks = display['WeekOfMonth'].unique().size
 
 	return dcc.Graph(
 		id = 'calendar',
@@ -208,8 +275,8 @@ def update_cal(input_month, input_gender, input_age, input_hipertension,
 					'showticklabels': False
 				},
 				hovermode = 'closest',
-				height = cal_height,
-				width = cal_height * cal_ratio
+				height = 182.5 * weeks,
+				width = cal_width
 			)
 		}
 	)
@@ -217,11 +284,3 @@ def update_cal(input_month, input_gender, input_age, input_hipertension,
 
 if __name__ == '__main__':
 	app.run_server(debug = True)
-
-
-
-
-
-
-
-
