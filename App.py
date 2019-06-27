@@ -66,7 +66,7 @@ h3_style = {
 }
 
 # Read in model object
-with open('gb00.pkl', 'rb') as file:  
+with open('gb06.pkl', 'rb') as file:  
     model = pickle.load(file)
 
 app = dash.Dash()
@@ -204,15 +204,15 @@ def update_cal(input_month, input_gender, input_age, input_hipertension,
 	else:
 		display.loc[:, 'Gender'] = 0
 
-	display.loc[:, 'Gender'] = 0
+	# display.loc[:, 'Gender'] = 0
 	display.loc[:, 'Age'] = input_age
-	display.loc[:, 'Scholarship'] = 0
-	display.loc[:, 'Hipertension'] = input_hipertension
-	display.loc[:, 'Diabetes'] = input_diabetes
-	display.loc[:, 'PreviousMiss'] = 0
-	display.loc[:, 'Alcoholism'] = 0
-	display.loc[:, 'Handcap'] = input_handcap
-	display.loc[:, 'SMS_received'] = input_sms
+	# display.loc[:, 'Scholarship'] = 0
+	# display.loc[:, 'Hipertension'] = input_hipertension
+	# display.loc[:, 'Diabetes'] = input_diabetes
+	# display.loc[:, 'PreviousMiss'] = 0
+	# display.loc[:, 'Alcoholism'] = 0
+	# display.loc[:, 'Handcap'] = input_handcap
+	# display.loc[:, 'SMS_received'] = input_sms
 
 	pred_data = display.drop(
 		[
@@ -254,7 +254,7 @@ def update_cal(input_month, input_gender, input_age, input_hipertension,
 							'tickformat': ".0%"
 						}
 					},
-					#text = display['Day'],
+					text = round(display['Prob'], 4),
 					textposition = 'middle center'
 				)
 			],
