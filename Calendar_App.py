@@ -17,7 +17,6 @@ from sklearn.externals import joblib
 # Read in date data
 dates = pd.read_csv('Dates.csv')
 dates.loc[:, 'Date'] = pd.to_datetime(dates.loc[:, 'Date']).dt.date
-#dates['Prob'] = np.random.uniform(0, 1, len(dates.index)) # pseudo model pred
 day_array = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
 # Input option lists
@@ -66,7 +65,7 @@ h3_style = {
 }
 
 # Read in model object
-with open('gb06.pkl', 'rb') as file:  
+with open('Calendar_gb00.pkl', 'rb') as file:  
     model = pickle.load(file)
 
 app = dash.Dash()
@@ -88,16 +87,6 @@ app.layout = html.Div(
 			style = input_style),
 		
 			html.Div([
-				html.H3('Patient Type', style = h3_style),
-				dcc.Dropdown(
-					id = 'patient',
-					value = 'New Patient',
-					options = [{'label': i, 'value': i} for i in patients]
-				),		
-			],
-			style = input_style),
-
-			html.Div([
 				html.H3('Gender', style = h3_style),
 				dcc.Dropdown(
 					id = 'gender',
@@ -106,15 +95,7 @@ app.layout = html.Div(
 				),
 			],
 			style = input_style),
-		],
-		style = {
-			'width': '50%',
-			'display': 'table'
-		}),
 
-		html.H2('Medical History', style = h2_style),
-
-		html.Div([
 			html.Div([
 				html.H3('Age', style = h3_style),
 				dcc.Input(
@@ -124,42 +105,7 @@ app.layout = html.Div(
 				),
 			],
 			style = input_style),
-			html.Div([
-				html.H3('Hipertension', style = h3_style),
-				dcc.Input(
-					id = 'hipertension',
-					value = 0,
-					type = 'number'
-				),
-			],
-			style = input_style),
-			html.Div([
-				html.H3('Diabetic', style = h3_style),
-				dcc.Input(
-					id = 'diabetes',
-					value = 0,
-					type = 'number'
-				),
-			],
-			style = input_style),
-			html.Div([
-				html.H3('Handicap', style = h3_style),
-				dcc.Input(
-					id = 'handcap',
-					value = 0,
-					type = 'number'
-				),
-			],
-			style = input_style),
-			html.Div([
-				html.H3('Received SMS', style = h3_style),
-				dcc.Input(
-					id = 'sms',
-					value = 0,
-					type = 'number'
-				)
-			],
-			style = input_style),
+
 		],
 		style = {
 			'width': '50%',
@@ -179,16 +125,10 @@ app.layout = html.Div(
 		Input(component_id = 'month', component_property = 'value'),
 		Input(component_id = 'gender', component_property = 'value'),
 		Input(component_id = 'age', component_property = 'value'),
-		Input(component_id = 'hipertension', component_property = 'value'),
-		Input(component_id = 'diabetes', component_property = 'value'),
-		Input(component_id = 'handcap', component_property = 'value'),
-		Input(component_id = 'sms', component_property = 'value')
 
 	]
 )
-def update_cal(input_month, input_gender, input_age, input_hipertension,
-				input_diabetes, input_handcap, input_sms
-	):
+def update_cal(input_month, input_gender, input_age):
 
 	# Filter dates data to show selected month
 	display = dates[dates['MonthName'] == input_month]
@@ -204,15 +144,7 @@ def update_cal(input_month, input_gender, input_age, input_hipertension,
 	else:
 		display.loc[:, 'Gender'] = 0
 
-	# display.loc[:, 'Gender'] = 0
 	display.loc[:, 'Age'] = input_age
-	# display.loc[:, 'Scholarship'] = 0
-	# display.loc[:, 'Hipertension'] = input_hipertension
-	# display.loc[:, 'Diabetes'] = input_diabetes
-	# display.loc[:, 'PreviousMiss'] = 0
-	# display.loc[:, 'Alcoholism'] = 0
-	# display.loc[:, 'Handcap'] = input_handcap
-	# display.loc[:, 'SMS_received'] = input_sms
 
 	pred_data = display.drop(
 		[
@@ -227,6 +159,8 @@ def update_cal(input_month, input_gender, input_age, input_hipertension,
 	probs = pd.Series([i[1] for i in probs])
 
 	display['Prob'] = probs
+	display['ProbLabel'] = round(display['Prob'] * 100, 2).map(str) + '%'
+	display['Label'] = display['Day'].map(str) + ': ' + display['ProbLabel']
 
 	# Define calendar ratio
 	cal_width = 1200
@@ -254,8 +188,11 @@ def update_cal(input_month, input_gender, input_age, input_hipertension,
 							'tickformat': ".0%"
 						}
 					},
-					text = round(display['Prob'], 4),
-					textposition = 'middle center'
+					text = display['Label'],
+					textposition = 'middle center',
+					textfont = {
+						'color': '#FFFFFF'
+					}
 				)
 			],
 			'layout': go.Layout(
