@@ -9,3 +9,5 @@ EDA
 Applications:
 Schedule_App.py
 -> Calendar_App.py
+
+* This is my first time trying anthing like this in Python. Please show mercy
